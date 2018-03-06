@@ -60,6 +60,7 @@
                 _this.pasteBox = $('a', _this.fieldPaste).click(function (e) {
                     e.preventDefault();
                     $.colorbox({
+                        trapFocus: false,
                         inline: true,
                         href: $(this).attr('href'),
                         width: '500px',
@@ -108,8 +109,30 @@
                     // sortable
                     if (_this.options.mode !== 'single') {
                         _this.fieldList.sortable({
-                            stop: function () {
-                                _this.saveMultiValue();
+                            start: function (e, ui) {
+                              $(ui.item).find('.inlineTabEditor').each(function () {
+                                 tinymce.execCommand('mceRemoveEditor', false, $(this).attr('id'));
+                              });
+                            },
+                            stop: function (e, ui) {
+                              $(ui.item).find('.inlineTabEditor').each(function () {
+                                var editorId = $(this).attr('id');
+                                var theme = $(this).data('theme');
+                                if (tinyMCE.majorVersion == 4) {
+                                    if (modxRTEbridge_tinymce4 != undefined) {
+                                        
+                                        var configObj = theme != undefined ? window['config_tinymce4_'+theme] : window[modxRTEbridge_tinymce4.default];
+                                        configObj['selector'] = '#' + editorId;
+                                        configObj['setup'] = function(ed) { ed.on("change", function(e) { documentDirty=true; tinymce.triggerSave(); jQuery('#'+_this.tvid).transformField("saveMultiValue"); }); };
+                                        tinyMCE.init(configObj);
+                                    } else {
+                                        tinyMCE.execCommand('mceAddEditor', false, editorId);
+                                    }
+                                } else {
+                                    tinyMCE.execCommand('mceAddControl', false, editorId);
+                                }
+                              });
+                               _this.saveMultiValue();
                             },
                             axis: 'y',
                             helper: 'clone'
@@ -159,6 +182,9 @@
                         $(this).val('');
                 }
             });
+
+            clone.find('.inlineTabEditor.initialized').removeClass('initialized');
+
             return clone;
         },
         saveMultiValue: function () {
@@ -214,7 +240,7 @@
             var _this = this;
 
             // datepicker
-            $('.mtvDatePicker', el).click(function () {
+            $('.mtv_date', el).click(function () {
                 $.extend(datepickerOptions, {
                     changeMonth: true,
                     changeYear: true,
@@ -232,6 +258,27 @@
                 BrowseFileServer(field);
             });
 
+            //color
+            $('.jscolor', el).ColorPicker({
+      					onSubmit: function(hsb, hex, rgb, el) {
+      						$(el).val(hex);
+      						$(el).attr("value",hex);
+
+      						var color = '#' +hex+'!important';
+                  $(el).attr('style', 'background-color: '+color);
+      						$(el).ColorPickerHide();
+      						$(el).val(hex);
+      						$(el).attr("value",hex);
+      						$(el).change();
+      					},
+      					onBeforeShow: function () {
+      					  $(this).ColorPickerSetColor(this.value);
+      					 }
+      					})
+      			.bind('keyup', function(){
+      			    $(this).ColorPickerSetColor(this.value);
+      			});
+
             // image field browser
             $('.browseimage', el).click(function (e) {
                 e.preventDefault();
@@ -246,6 +293,8 @@
                 clone.show('fast', function () {
                     $(this).removeAttr('style');
                 });
+
+                _this.initRichtext(clone, _this);
                 _this.saveMultiValue();
                 _this.fieldListCounter++;
             });
@@ -261,7 +310,9 @@
                     // clear inputs/textarea if only one element is present
                     var inputs = $('[name]', $(this).parent());
                     inputs.each(function () {
-                        var type = $(this).attr('type');
+                        var self = $(this),
+                            type = self.attr('type');
+
                         switch (type) {
                             case 'button':
                                 break;
@@ -271,15 +322,30 @@
                                 break;
                             case 'checkbox':
                             case 'radio':
-                                $(this).prop('checked', false);
+                                self.prop('checked', false);
                                 break;
-                            default:
-                                $(this).val('');
+                            default: {
+                                if (this.type == 'textarea' && self.hasClass('mtv_richtext')) {
+                                    tinyMCE.get(self.attr('id')).setContent('');
+                                    break;
+                                }
+
+                                self.val('');
+                            }
                         }
                     });
                     $('.mtvThumb', $(this).parent()).html('');
+
+                    _this.data.value = [];
+
+                    _this.$el.setValue($.toJSON({
+                        fieldValue:    _this.data.value,
+                        fieldSettings: _this.data.settings
+                    }));
                 }
             });
+            
+
             // change field
             $('[name]', el).bind('change keyup', function (e) {
                 e.preventDefault();
@@ -311,7 +377,10 @@
                 }
                 $.each(_this.data.value, function () {
                     var values = this;
+
                     if (_this.fieldListCounter === 1) {
+                        var clone = _this.fieldListElement;
+
                         $.each(values, function (key, value) {
                             var fieldName = (typeof key === 'number') ? _this.fieldNames[key] : key;
                             var fieldInput = $('[name^="' + _this.tvid + fieldName + '_mtv"][type!="hidden"]', _this.fieldListElement);
@@ -331,6 +400,7 @@
                         var clone = _this.duplicateElement(_this.fieldListElementEmpty, _this.fieldListCounter);
                         clone.show();
                         _this.fieldList.append(clone);
+
                         $.each(values, function (key, value) {
                             var fieldName = (typeof key === 'number') ? _this.fieldNames[key] : key;
                             var fieldInput = $('[name^="' + _this.tvid + fieldName + '_mtv"][type!="hidden"]', clone);
@@ -347,10 +417,47 @@
                             }
                         });
                     }
+
                     _this.fieldListCounter++;
                 });
             }
 
+            _this.initRichtext(_this.fieldList, _this);
+        },
+        initRichtext: function(el, _this) {
+            //Dmi3yy add inline tinyMCE
+            if (typeof tinyMCE !== 'undefined' && (_this.options.mode == 'vertical' || _this.options.mode == 'single') ) {
+                $('.inlineTabEditor:not(.initialized)', el).each(function () {
+                    $(this).addClass('initialized');
+                    var editorId = $(this).attr('id');
+                    var theme = $(this).data('theme');
+                    if (tinyMCE.majorVersion == 4) {
+                        if (modxRTEbridge_tinymce4 != undefined) {
+
+                            var configObj = theme != undefined ? window['config_tinymce4_'+theme] : window[modxRTEbridge_tinymce4.default];
+                            configObj['selector'] = '#' + editorId;
+                            configObj['setup'] = function(ed) { ed.on("change", function(e) { documentDirty=true; tinymce.triggerSave(); jQuery('#'+_this.tvid).transformField("saveMultiValue"); }); };
+                            tinyMCE.init(configObj);
+                        } else {
+                            tinyMCE.execCommand('mceAddEditor', false, editorId);
+                        }
+                    } else {
+                        tinyMCE.execCommand('mceAddControl', false, editorId);
+                    }
+                    tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_ifr'), 'height', '200px');
+                    tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_tbl'), 'height', 'auto');
+                    tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_ifr'), 'width', '100%');
+                    tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_tbl'), 'width', '100%');
+                });
+            } else if (typeof CKEDITOR !== 'undefined' && CKEDITOR.version.substr(0,1) == 4) {
+                $('.inlineTabEditor:not(.initialized)', el).each(function () {
+                    $(this).addClass('initialized');
+                    var editorId = $(this).attr('id');
+                    var theme = $(this).data('theme');
+                    var configObj = theme != undefined ? window['config_ckeditor4_'+theme] : window[modxRTEbridge_ckeditor4.default];
+                    CKEDITOR.replace(editorId, configObj);
+                });
+            }
         },
         clear: function () {
             if (confirm(this.options.language.confirmclear)) {
@@ -374,8 +481,30 @@
             this.fieldEdit.hide();
             // sortable
             this.fieldList.sortable({
-                stop: function () {
-                    this.saveMultiValue();
+                start: function (e, ui) {
+                  $(ui.item).find('.inlineTabEditor').each(function () {
+                     tinymce.execCommand('mceRemoveEditor', false, $(this).attr('id'));
+                  });
+                },
+                stop: function (e, ui) {
+                  $(ui.item).find('.inlineTabEditor').each(function () {
+                     var editorId = $(this).attr('id');
+                    var theme = $(this).data('theme');
+                    if (tinyMCE.majorVersion == 4) {
+                        if (modxRTEbridge_tinymce4 != undefined) {
+                            
+                            var configObj = theme != undefined ? window['config_tinymce4_'+theme] : window[modxRTEbridge_tinymce4.default];
+                            configObj['selector'] = '#' + editorId;
+                            configObj['setup'] = function(ed) { ed.on("change", function(e) { documentDirty=true; tinymce.triggerSave(); jQuery('#'+_this.tvid).transformField("saveMultiValue"); }); };
+                            tinyMCE.init(configObj);
+                        } else {
+                            tinyMCE.execCommand('mceAddEditor', false, editorId);
+                        }
+                    } else {
+                        tinyMCE.execCommand('mceAddControl', false, editorId);
+                    }
+                  });
+                   this.saveMultiValue();
                 },
                 axis: 'y',
                 helper: 'clone'
@@ -545,10 +674,12 @@
         this.tableAppend = '<img alt="' + this.options.language.append + ' " src="../' + this.options.mtvpath + 'css/images/add.png" /> ' + this.options.language.append;
         this.tableEdit = '<img alt="' + this.options.language.edit + ' " src="../' + this.options.mtvpath + 'css/images/application_form_edit.png" /> ' + this.options.language.edit;
         this.tableRemove = '<img alt="' + this.options.language.remove + ' " src="../' + this.options.mtvpath + 'css/images/delete.png" /> ' + this.options.language.remove;
+        this.tableDuplicate = '<img alt="' + this.options.language.duplicate + ' " src="../' + this.options.mtvpath + 'css/images/copy.gif" /> ' + this.options.language.duplicate;
         this.tableButtons = $('<ul>').addClass('actionButtons');
         this.tableButtonAppend = $('<li>').attr('id', this.tvid + 'tableAppend').append($('<a>').attr('href', '#').html(this.tableAppend));
         this.tableButtonEdit = $('<li>').attr('id', this.tvid + 'tableEdit').append($('<a>').attr('href', '#').addClass('disabled').html(this.tableEdit));
         this.tableButtonRemove = $('<li>').attr('id', this.tvid + 'tableRemove').append($('<a>').attr('href', '#').addClass('disabled').html(this.tableRemove));
+        this.tableButtonDuplicate = $('<li>').attr('id', this.tvid + 'tableDuplicate').append($('<a>').attr('href', '#').addClass('disabled').html(this.tableDuplicate));
         this.tableClasses = this.options.fieldsettings.tableClasses;
         this.radioTabs = this.options.fieldsettings.radioTabs;
         this.editBox = '';
@@ -653,7 +784,7 @@
 
                     // buttons above datatable
                     _this.fieldTable.parent().prepend(_this.tableButtons);
-                    _this.tableButtons.append(_this.tableButtonAppend, _this.tableButtonRemove, _this.tableButtonEdit);
+                    _this.tableButtons.append(_this.tableButtonAppend, _this.tableButtonRemove, _this.tableButtonEdit, _this.tableButtonDuplicate);
 
                     // remove row event
                     $('a', _this.tableButtonRemove).click(function (e) {
@@ -671,6 +802,15 @@
                             return false;
                         }
                         _this.editRow($(this).parent().attr('id').replace(/[\w\d]+table/, '').toLowerCase(), $('.row_selected', _this.fieldTable)[0]);
+                    });
+
+                    // duplicate row event
+                    $('a', _this.tableButtonDuplicate).click(function (e) {
+                        e.preventDefault();
+                        if ($(this).hasClass('disabled')) {
+                            return false;
+                        }
+                        _this.duplicateRow($('.row_selected', _this.fieldTable)[0]);
                     });
 
                     // save/append edit box
@@ -698,10 +838,21 @@
             }
         },
         clearInputs: function (el) {
-            $('.tabEditor', el).each(function () {
-                var editorId = $(this).attr('id');
-                tinyMCE.execCommand('mceRemoveControl', false, editorId);
-            });
+            if (typeof tinyMCE !== 'undefined') {
+                $('.tabEditor', el).each(function () {
+                    var editorId = $(this).attr('id');
+                    if(tinyMCE.majorVersion == 4) {
+                        tinyMCE.execCommand('mceRemoveEditor', false, editorId);
+                    } else {
+                        tinyMCE.execCommand('mceRemoveControl', false, editorId);
+                    }
+                });
+            } else if (typeof CKEDITOR !== 'undefined' && CKEDITOR.version.substr(0,1) == 4) {
+                $('.tabEditor', el).each(function () {
+                    var editorId = $(this).attr('id');
+                    CKEDITOR.instances[editorId].destroy();
+                });
+            }
             $(':input', el).each(function () {
                 var inputtype = $(this).attr('type');
                 var inputid = $(this).attr('id');
@@ -811,7 +962,7 @@
             var _this = this;
 
             // datepicker
-            $('.mtvDatePicker', el).click(function () {
+            $('.mtv_date', el).click(function () {
                 $.extend(datepickerOptions, {
                     changeMonth: true,
                     changeYear: true,
@@ -828,6 +979,27 @@
                 BrowseFileServer(field);
                 return false;
             });
+            
+            //color
+            $('.jscolor', el).ColorPicker({
+      					onSubmit: function(hsb, hex, rgb, el) {
+      						$(el).val(hex);
+      						$(el).attr("value",hex);
+
+      						var color = '#' +hex+'!important';
+                  $(el).attr('style', 'background-color: '+color);
+      						$(el).ColorPickerHide();
+      						$(el).val(hex);
+      						$(el).attr("value",hex);
+      						$(el).change();
+      					},
+      					onBeforeShow: function () {
+      					  $(this).ColorPickerSetColor(this.value);
+      					 }
+      					})
+      			.bind('keyup', function(){
+      			    $(this).ColorPickerSetColor(this.value);
+      			});
 
             // image field browser
             $('.browseimage', el).click(function () {
@@ -957,6 +1129,7 @@
                 $(this).siblings('a').click();
             });
             $.colorbox({
+                trapFocus: false,
                 inline: true,
                 href: '#' + _this.tvid + 'editform',
                 width: (_this.options.fieldsettings.editBoxWidth != '') ? _this.options.fieldsettings.editBoxWidth : '640px',
@@ -976,14 +1149,34 @@
                         $('.formtabradio:not(.active) input[type="radio"]', _this.fieldEditArea).prop('checked', false);
                         $('.formtabradio.active input[type="radio"]', _this.fieldEditArea).prop('checked', true);
                     }
-                    $('.tabEditor', _this.fieldEditArea).each(function () {
-                        var editorId = $(this).attr('id');
-                        tinyMCE.execCommand('mceAddControl', false, editorId);
-                        tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_ifr'), 'height', '200px');
-                        tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_tbl'), 'height', 'auto');
-                        tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_ifr'), 'width', '100%');
-                        tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_tbl'), 'width', '100%');
-                    });
+                    if (typeof tinyMCE !== 'undefined') {
+                        $('.tabEditor', _this.fieldEditArea).each(function () {
+                            var editorId = $(this).attr('id');
+                            var theme = $(this).data('theme');
+                            if (tinyMCE.majorVersion == 4) {
+                                if (modxRTEbridge_tinymce4 != undefined) {
+                                    var configObj = theme != undefined ? window['config_tinymce4_'+theme] : window[modxRTEbridge_tinymce4.default];
+                                    configObj['selector'] = '#' + editorId;
+                                    tinyMCE.init(configObj);
+                                } else {
+                                    tinyMCE.execCommand('mceAddEditor', false, editorId);
+                                }
+                            } else {
+                                tinyMCE.execCommand('mceAddControl', false, editorId);
+                            }
+                            tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_ifr'), 'height', '200px');
+                            tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_tbl'), 'height', 'auto');
+                            tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_ifr'), 'width', '100%');
+                            tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_tbl'), 'width', '100%');
+                        });
+                    } else if (typeof CKEDITOR !== 'undefined' && CKEDITOR.version.substr(0,1) == 4) {
+                        $('.tabEditor', _this.fieldEditArea).each(function () {
+                            var editorId = $(this).attr('id');
+                            var theme = $(this).data('theme');
+                            var configObj = theme != undefined ? window['config_ckeditor4_'+theme] : window[modxRTEbridge_ckeditor4.default];
+                            CKEDITOR.replace(editorId, configObj);
+                        });
+                    }
                     setTimeout(function () {
                         _this.editBox.colorbox.resize();
                     }, 250)
@@ -995,22 +1188,24 @@
         },
 
         // save/append edit box
-        saveRow: function (mode) {
+        saveRow: function (mode, values) {
             var _this = this;
 
             if (typeof tinyMCE !== 'undefined') {
                 tinyMCE.triggerSave();
             }
-            var values = {};
-            var saveTab = $('[name^="' + _this.tvid + 'tab_radio_mtv"]', _this.fieldEditForm).getValue();
-            values.fieldTab = (saveTab !== '') ? saveTab : '';
-            $.each(_this.fieldNames, function () {
-                var fieldInput = $('[name^="' + _this.tvid + this + '_mtv"][type!="hidden"]', _this.fieldEditForm);
-                values[this] = fieldInput.getValue();
-                if (fieldInput.hasClass('mtvImage')) {
-                    _this.setThumbnail(values[this], fieldInput.attr('name'), _this.fieldEditForm);
-                }
-            });
+            if(typeof values === 'undefined') {
+                values = {};
+                var saveTab = $('[name^="' + _this.tvid + 'tab_radio_mtv"]', _this.fieldEditForm).getValue();
+                values.fieldTab = (saveTab !== '') ? saveTab : '';
+                $.each(_this.fieldNames, function () {
+                    var fieldInput = $('[name^="' + _this.tvid + this + '_mtv"][type!="hidden"]', _this.fieldEditForm);
+                    values[this] = fieldInput.getValue();
+                    if (fieldInput.hasClass('mtvImage')) {
+                        _this.setThumbnail(values[this], fieldInput.attr('name'), _this.fieldEditForm);
+                    }
+                });
+            };
 
             if (_this.options.mode != 'dbtable') {
                 if ($('form#mutate [name="id"]').val()) {
@@ -1096,6 +1291,7 @@
             $(selector).removeClass('row_selected');
             $('a', _this.tableButtonEdit).addClass('disabled');
             $('a', _this.tableButtonRemove).addClass('disabled');
+            $('a', _this.tableButtonDuplicate).addClass('disabled');
             if (_this.options.mode != 'dbtable') {
                 _this.fieldTable.fnDeleteRow(selector);
                 _this.saveMultiValue();
@@ -1125,8 +1321,16 @@
                 });
             }
         },
-        // toggle row
+        // duplicate row
+        duplicateRow: function (selector) {
+            var _this = this;
 
+            if (_this.options.mode != 'dbtable') {
+                var lineValue = _this.fieldTable.fnGetData(selector);
+                _this.saveRow('append', lineValue);
+            }
+        },
+        // toggle row
         toggleRow: function (row) {
             var _this = this;
 
@@ -1136,12 +1340,14 @@
                         $(this).removeClass('row_selected');
                         $('a', _this.tableButtonEdit).addClass('disabled');
                         $('a', _this.tableButtonRemove).addClass('disabled');
+                        $('a', _this.tableButtonDuplicate).addClass('disabled');
                     }
                     else {
                         _this.fieldTable.$('tr.row_selected').removeClass('row_selected');
                         $(this).addClass('row_selected');
                         $('a', _this.tableButtonEdit).removeClass('disabled');
                         $('a', _this.tableButtonRemove).removeClass('disabled');
+                        $('a', _this.tableButtonDuplicate).removeClass('disabled');
                     }
                 });
             }
@@ -1158,6 +1364,7 @@
                             $(element[0]).addClass('row_selected');
                             $('a', _this.tableButtonEdit).removeClass('disabled');
                             $('a', _this.tableButtonRemove).removeClass('disabled');
+                            $('a', _this.tableButtonDuplicate).removeClass('disabled');
                             _this.editRow('edit', element[0]);
                         },
                         link: _this.tableEdit
@@ -1167,6 +1374,12 @@
                             _this.editRow('append', element[0]);
                         },
                         link: _this.tableAppend
+                    },
+                    tableDuplicate: {
+                        click: function (element) {
+                            _this.duplicateRow(element[0]);
+                        },
+                        link: _this.tableDuplicate
                     },
                     tableRemove: {
                         click: function (element) {

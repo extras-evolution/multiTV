@@ -55,21 +55,23 @@ $multiTV = new multiTV($modx, array(
 $templates = $multiTV->templates;
 
 // get snippet parameter
-$params = array();
+$params = &$modx->event->params;
 $params['docid'] = (isset($docid)) ? $docid : $modx->documentObject['id'];
 $params['outerTpl'] = (isset($outerTpl)) ? $outerTpl : (isset($templates['outerTpl']) ? '@CODE:' . $templates['outerTpl'] : '@CODE:<select name="' . $tvName . '">[+wrapper+]' . ((isset($paginate) && $paginate) ? '[+pagination+]' : '') . '</select>');
 $params['emptyOutput'] = (isset($emptyOutput) && !$emptyOutput) ? false : true;
 $params['noResults'] = (isset($noResults)) ? $noResults : '';
 $params['rowTpl'] = (isset($rowTpl)) ? $rowTpl : (isset($templates['rowTpl']) ? '@CODE:' . $templates['rowTpl'] : '@CODE:<option value="[+value+]">[+key+]</option>');
 $params['display'] = (isset($display)) ? $display : 5;
-$params['offset'] = (isset($offset)) ? intval($offset) : 0;
+$params['offset'] = (isset($offset)) ? (int)$offset : 0;
 $params['rows'] = (isset($rows) && ($rows != 'all')) ? explode(',', $rows) : 'all';
 $params['toPlaceholder'] = (isset($toPlaceholder) && $toPlaceholder != '') ? $toPlaceholder : false;
 $params['toJson'] = (isset($toJson) && $toJson != '') ? $toJson : false;
 $params['randomize'] = (isset($randomize) && $randomize) ? true : false;
 $params['reverse'] = (isset($reverse) && $reverse) ? true : false;
 $params['orderBy'] = (isset($orderBy)) ? $orderBy : '';
-list($params['sortBy'], $params['sortDir']) = explode(" ", $orderBy);
+if($params['orderBy']) {
+	list($params['sortBy'], $params['sortDir']) = explode(" ", $params['orderBy']);
+}
 $params['published'] = (isset($published)) ? $published : '1';
 $params['outputSeparator'] = (isset($outputSeparator)) ? $outputSeparator : '';
 $params['firstClass'] = (isset($firstClass)) ? $firstClass : 'first';
@@ -78,8 +80,9 @@ $params['evenClass'] = (isset($evenClass)) ? $evenClass : '';
 $params['oddClass'] = (isset($oddClass)) ? $oddClass : '';
 $params['paginate'] = (isset($paginate) && $paginate) ? true : false;
 $params['offsetKey'] = (isset($offsetKey)) ? $offsetKey : 'page';
-$params['offset'] = ($params['paginate'] && ($params['display'] != 'all') && isset($_GET[$params['offsetKey']])) ? (intval($_GET[$params['offsetKey']]) - 1) * $params['display'] : $params['offset'];
+$params['offset'] = ($params['paginate'] && ($params['display'] != 'all') && isset($_GET[$params['offsetKey']])) ? ((int)$_GET[$params['offsetKey']] - 1) * $params['display'] : $params['offset'];
 $params['where'] = isset($where) ? json_decode($where, true) : false;
+$params['iterationStart'] = (isset($iterationStart)) ? (int)$iterationStart : 1;
 
 if (!empty($fromJson)) {
     $tvOutput = json_decode($fromJson, true);
