@@ -390,33 +390,33 @@ class multiTV
                     $this->fieldsrte[] = ($this->options['type'] == 'module') ? $fieldName : "tv" . $this->tvID . $fieldName;
                     // invoke OnRichTextEditorInit event for TinyMCE4
                     $fieldId = substr($fieldName, 0, -4);
-                    $theme = isset($this->fields[$fieldId]['theme']) ? $this->fields[$fieldId]['theme'] : '';
-                    if ($theme) {
-                        if (in_array($which_editor, array('TinyMCE4', 'CKEditor4'))) {
-                            $evtOut = $this->modx->invokeEvent('OnRichTextEditorInit', array(
-                                'editor' => $which_editor,
-                                'options' => array('theme' => $theme)
-                            ));
-                            if (is_array($evtOut))
-                                $evtOut = implode('', $evtOut);
-                        };
-                    }
+                    $theme = isset($this->fields[$fieldId]['theme']) ? $this->fields[$fieldId]['theme'] : $this->modx->config['tinymce_editor_theme'];
+                    $height = isset($this->fields[$fieldId]['height']) ? $this->fields[$fieldId]['height'] : 400;
+                    if (in_array($which_editor, array('TinyMCE4', 'CKEditor4'))) {
+                        $evtOut = $this->modx->invokeEvent('OnRichTextEditorInit', array(
+                            'editor' => $which_editor,
+                            'options' => array('theme' => $theme),
+                            'height' => $height
+                        ));
+                        if (is_array($evtOut))
+                            $evtOut = implode('', $evtOut);
+                    };
                     $fieldClass[] = 'tabEditor';
                 } elseif( $this->display == 'vertical' || $this->display == 'single'){
-                   $this->fieldsrte[] = ($this->options['type'] == 'module') ? $fieldName : "tv" . $this->tvID . $fieldName;
+                    $this->fieldsrte[] = ($this->options['type'] == 'module') ? $fieldName : "tv" . $this->tvID . $fieldName;
                     // invoke OnRichTextEditorInit event for TinyMCE4
                     $fieldId = substr($fieldName, 0, -4);
-                    $theme = isset($this->fields[$fieldId]['theme']) ? $this->fields[$fieldId]['theme'] : '';
-                    if ($theme) {
-                        if (in_array($which_editor, array('TinyMCE4', 'CKEditor4'))) {
-                            $evtOut = $this->modx->invokeEvent('OnRichTextEditorInit', array(
-                                'editor' => $which_editor,
-                                'options' => array('theme' => $theme)
-                            ));
-                            if (is_array($evtOut))
-                                $evtOut = implode('', $evtOut);
-                        };
-                    }
+                    $theme = isset($this->fields[$fieldId]['theme']) ? $this->fields[$fieldId]['theme'] : $this->modx->config['tinymce_editor_theme'];
+                    $height = isset($this->fields[$fieldId]['height']) ? $this->fields[$fieldId]['height'] : 400;
+                    if (in_array($which_editor, array('TinyMCE4', 'CKEditor4'))) {
+                        $evtOut = $this->modx->invokeEvent('OnRichTextEditorInit', array(
+                            'editor' => $which_editor,
+                            'options' => array('theme' => $theme),
+                            'height' => $height
+                        ));
+                        if (is_array($evtOut))
+                            $evtOut = implode('', $evtOut);
+                    };
                     $fieldClass[] = 'inlineTabEditor';
                 } else{
                     $fieldType = 'textarea';
