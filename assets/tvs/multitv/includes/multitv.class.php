@@ -1088,6 +1088,8 @@ class multiTV
         $params['rowTpl'] = str_replace(array_keys($maskedTags), array_values($maskedTags), $params['rowTpl']);
         if(is_array($tvOutput)){ 
             $countOutput = count($tvOutput);
+        } else {
+            $countOutput = 0;
         }
         $firstEmpty = true;
         if ($countOutput) {
