@@ -10,7 +10,7 @@
  * Load table processor
  */
 $columnNames = array();
-if (!$settings['configuration']['sorting'] && $settings['configuration']['sortindex']) {
+if (empty($settings['configuration']['sorting']) && ($settings['configuration']['sortindex'] ?? '')) {
     $columnNames[] = 'MTV_RowId';
 }
 if ($settings['configuration']['radioTabs']) {
@@ -39,7 +39,7 @@ if ($settings['configuration']['sorting']) {
         }
         $i++;
     }
-} elseif ($settings['configuration']['sortindex']) {
+} elseif (!empty($settings['configuration']['sortindex'])) {
     $orderby = $settings['configuration']['sortindex'] . ' ASC';
 }
 
@@ -71,7 +71,7 @@ $aaData = array();
 $i = 0;
 foreach ($displayRecords as $record) {
     $aaData[$i]['id'] = $record['id'];
-    if (!$settings['configuration']['sorting'] && $settings['configuration']['sortindex']) {
+    if (empty($settings['configuration']['sorting']) && ($settings['configuration']['sortindex'] ?? '')) {
         $aaData[$i]['DT_RowId'] = (string)$i;
     }
     if ($settings['configuration']['radioTabs']) {

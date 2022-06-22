@@ -273,7 +273,7 @@ class multiTV
         if (isset($settings[$this->tvTemplates])) {
             $this->templates = $settings[$this->tvTemplates];
         }
-        $this->display = $settings['display'];
+        $this->display = $settings['display'] ?? 'datatable';
         $this->configuration['csvseparator'] = isset($settings['configuration']['csvseparator']) ? $settings['configuration']['csvseparator'] : ',';
         $this->configuration['enablePaste'] = isset($settings['configuration']['enablePaste']) ? $settings['configuration']['enablePaste'] : true;
         $this->configuration['enableClear'] = isset($settings['configuration']['enableClear']) ? $settings['configuration']['enableClear'] : true;
@@ -831,7 +831,7 @@ class multiTV
                 'id' => ($this->configuration['radioTabs']) ? $config['table'] . 'tab_radio_' . $tab['value'] : $config['table'] . 'tab_' . $key,
                 'tvid' => $config['table'],
                 'caption' => $tab['caption'],
-                'value' => $tab['value'],
+                'value' => $tab['value'] ?? '',
                 'content' => implode("\r\n", $tvElements),
                 'radio' => ($this->configuration['radioTabs']) ? '1' : '0'
             );
