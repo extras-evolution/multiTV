@@ -103,7 +103,9 @@ class multiTV
             $this->tvCaption = $tvDefinitions['caption'];
             $this->tvDescription = $tvDefinitions['description'];
             $this->tvDefault = $tvDefinitions['default_text'];
-            $this->tvTemplates = 'templates' . $tvDefinitions['tpl_config'];
+            if (isset($tvDefinitions['tpl_config'])) {
+                $this->tvTemplates = 'templates' . $tvDefinitions['tpl_config'];
+            }
         } else {
             $this->modx->messageQuit('No multiTV definitions set');
         }
@@ -262,12 +264,15 @@ class multiTV
         $this->fieldnames = array_keys($this->fields);
         $this->fieldtypes = array();
         foreach ($this->fields as $field) {
+            if (!isset($field['type'])) continue;
             $this->fieldtypes[] = $field['type'];
         }
         $this->fieldtitles = array();
         $this->fieldcolumns = isset($settings['columns']) ? $settings['columns'] : array();
         $this->fieldform = isset($settings['form']) ? $settings['form'] : array();
-        $this->templates = $settings[$this->tvTemplates];
+        if (isset($settings[$this->tvTemplates])) {
+            $this->templates = $settings[$this->tvTemplates];
+        }
         $this->display = $settings['display'];
         $this->configuration['csvseparator'] = isset($settings['configuration']['csvseparator']) ? $settings['configuration']['csvseparator'] : ',';
         $this->configuration['enablePaste'] = isset($settings['configuration']['enablePaste']) ? $settings['configuration']['enablePaste'] : true;
@@ -641,7 +646,7 @@ class multiTV
                         'id' => ($this->configuration['radioTabs']) ? $tvid . 'tab_radio_' . $tab['value'] : $tvid . 'tab_' . $key,
                         'tvid' => $tvid,
                         'caption' => $tab['caption'],
-                        'value' => $tab['value'],
+                        'value' => $tab['value'] ?? '',
                         'content' => implode("\n", $tvElements),
                         'radio' => ($this->configuration['radioTabs']) ? '1' : '0'
                     );
@@ -734,7 +739,7 @@ class multiTV
         $placeholder['cssfiles'] = implode("\r\n", $cssfiles);
         $placeholder['scriptfiles'] = implode("\r\n", $scriptfiles);
         $placeholder['tvcss'] = '<style type="text/css">' . "\r\n" . $tvcss . "\r\n" . '</style>';
-        $placeholder['tvheading'] = is_array($tvheading) ? implode("\n", $tvheading) : '';
+        $placeholder['tvheading'] = isset($tvheading) && is_array($tvheading) ? implode("\n", $tvheading) : '';
         $placeholder['tvmode'] = $this->display;
         $placeholder['tvfields'] = $tvfields;
         $placeholder['tvlanguage'] = $tvlanguage;
