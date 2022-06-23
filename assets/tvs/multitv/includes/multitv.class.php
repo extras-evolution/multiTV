@@ -524,7 +524,7 @@ class multiTV
                     $type = (isset($this->fields[$fieldname]['type'])) ? $this->fields[$fieldname]['type'] : 'text';
                     $elements = (isset($this->fields[$fieldname]['elements'])) ? $this->fields[$fieldname]['elements'] : '';
                     $default = (isset($this->fields[$fieldname]['default'])) ? $this->fields[$fieldname]['default'] : '';
-                    if ($this->fields[$fieldname]['width']) {
+                    if (!empty($this->fields[$fieldname]['width'])) {
                         $unit = (substr($this->fields[$fieldname]['width'], -1) == '%') ? '' : 'px';
                         $tvcss .= '.multitv #[+tvid+]list li.element .mtv_' . $fieldname . ' { width: ' . $this->fields[$fieldname]['width'] . $unit . ' !important }' . "\r\n";                    }
                     switch ($type) {
