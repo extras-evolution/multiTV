@@ -81,7 +81,7 @@ class multiTV
                 $this->cmsinfo['kcfinder'] = version_compare($version['version'], '1.0.10', '>') ? 'true' : 'false';
                 $this->cmsinfo['thumbsdir'] = ($this->modx->config['thumbsDir']) ? $this->modx->config['thumbsDir'] . '/' : '';
                 $this->cmsinfo['seturl'] = version_compare($version['version'], '1.0.12', '>') ? '' : 'old';
-                break;    
+                break;
         }
 
         switch ($options['type']) {
@@ -490,7 +490,7 @@ class multiTV
                     $type = (isset($this->fields[$fieldname]['type'])) ? $this->fields[$fieldname]['type'] : 'text';
                     $elements = (isset($this->fields[$fieldname]['elements'])) ? $this->fields[$fieldname]['elements'] : '';
                     $default = (isset($this->fields[$fieldname]['default'])) ? $this->fields[$fieldname]['default'] : '';
-                    if ($this->fields[$fieldname]['width']) {                        
+                    if (!empty($this->fields[$fieldname]['width'])) {
                         $unit = (substr($this->fields[$fieldname]['width'], -1) == '%') ? '' : 'px';
                         $tvcss .= '.multitv #[+tvid+]list li.element .inline.mtv_' . $fieldname . ', .multitv #[+tvid+]heading .inline.mtv_' . $fieldname . ' { width: ' . $this->fields[$fieldname]['width'] . $unit . '}';
                     }
@@ -1061,7 +1061,7 @@ class multiTV
                             unset($tvOutput[$tvKey]);
                         }
                     }
-                    break;  
+                    break;
                 case 'IN':
                     $value = explode(',', $value);
                     foreach ($tvOutput as $tvKey => $tvOut) {
@@ -1069,7 +1069,7 @@ class multiTV
                             unset($tvOutput[$tvKey]);
                         }
                     }
-                    break;  
+                    break;
                 case 'NOT IN':
                     $value = explode(',', $value);
                     foreach ($tvOutput as $tvKey => $tvOut) {
@@ -1091,7 +1091,7 @@ class multiTV
         $maskedTags = array('((' => '[+', '))' => '+]');
         $params['outerTpl'] = str_replace(array_keys($maskedTags), array_values($maskedTags), $params['outerTpl']);
         $params['rowTpl'] = str_replace(array_keys($maskedTags), array_values($maskedTags), $params['rowTpl']);
-        if(is_array($tvOutput)){ 
+        if(is_array($tvOutput)){
             $countOutput = count($tvOutput);
         } else {
             $countOutput = 0;
@@ -1173,7 +1173,7 @@ class multiTV
             ], $value));
 
             if($value == false) continue;
-            
+
 
             if (!$params['toJson']) {
                 if ($display == 1) {
