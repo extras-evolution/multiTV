@@ -26,7 +26,27 @@ $settings['fields'] = array(
         'caption' => 'ID',
         'type' => 'text',
         'default' => 'img{i}'
-    )
+    ),
+    'img16x9' =>array (
+        'caption' => 'Ratio 16x9',
+        'type' => 'crop',
+        'cropof' => 'image'
+    ),
+    'img4x3' =>array (
+        'caption' => 'Ratio 4x3',
+        'type' => 'crop',
+        'cropof' => 'image'
+    ),
+    'img1x1' =>array (
+        'caption' => 'Ratio 1x1',
+        'type' => 'crop',
+        'cropof' => 'image'
+    ),
+    'img2x3' =>array (
+        'caption' => 'Ratio 2x3',
+        'type' => 'crop',
+        'cropof' => 'image'
+    ),
 );
 $settings['templates'] = array(
     'outerTpl' => '<div class="images">[+wrapper+]</div>',
