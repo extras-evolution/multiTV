@@ -64,3 +64,5 @@ $language['reload'] = 'Ladda om';
 $language['close'] = 'Stäng';
 $language['close_button'] = 'Stäng [+lang.modulename+]';
 $language['config'] = 'Konfiguration';
+
+$language['crop'] = 'crop';
