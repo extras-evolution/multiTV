@@ -64,3 +64,5 @@ $language['reload'] = 'Ricarica';
 $language['close'] = 'Chiudi';
 $language['close_button'] = 'Chiudi [+lang.modulename+]';
 $language['config'] = 'Configurazione';
+
+$language['crop'] = 'crop';
