@@ -29,6 +29,11 @@ if ($form) {
             $default = (isset($settings['fields'][$fieldname]['default'])) ? $settings['fields'][$fieldname]['default'] : '';
             $caption = (is_array($tv) && isset($tv['caption'])) ? $tv['caption'] : $settings['fields'][$fieldname]['caption'];
             switch ($type) {
+                case 'crop':
+                    $tvElements[] = '<label for="' . $button . $fieldname . '_mtv">' . $caption . '</label>'.
+                    str_replace('[+tvid+]', $button, $multiTV->renderMultiTVFormElement($type, $fieldname, $elements, $fieldname, $default).
+                    '<input class="mtvCropper mtvImage" data-cropof="' . $settings['fields'][$fieldname]['cropof'] . '_mtv" data-aspectratio="'.str_replace('img','',$fieldname).'" type="button" value="crop">');
+                    break;
                 case 'thumb':
                     $tvElements[] = '<div class="mtvThumb" id="' . $button . $settings['fields'][$fieldname]['thumbof'] . '_mtvpreview"></div>';
                     break;
