@@ -371,9 +371,11 @@ class multiTV
         $theme = '';
         $evtOut = '';
         switch ($fieldType) {
-            case 'url' :
+            case 'crop' :
                 $fieldType = 'text';
+                $fieldClass[] = 'mtvCrop';
                 break;
+            case 'url' :
             case 'color' :
                 $fieldType = 'text';
                 break;
@@ -495,6 +497,10 @@ class multiTV
                         $tvcss .= '.multitv #[+tvid+]list li.element .inline.mtv_' . $fieldname . ', .multitv #[+tvid+]heading .inline.mtv_' . $fieldname . ' { width: ' . $this->fields[$fieldname]['width'] . $unit . '}';
                     }
                     switch ($type) {
+                        case 'crop':
+                            $tvelement[] = $this->renderMultiTVFormElement($type, $fieldname, $elements, 'inline mtv_' . $fieldname, $default) .
+                                '<input class="mtvCropper mtvCrop" data-cropof="' . $tvid . $this->fields[$fieldname]['cropof'] . '_mtv" data-aspectratio="' . str_replace('img', '', $fieldname) . '" type="button" value="[+tvlang.crop+]"><br>';
+                            break;
                         case 'thumb':
                             $tvelement[] = '<div class="inline mtvThumb" id="' . $tvid . $this->fields[$fieldname]['thumbof'] . '_mtvpreview"></div>';
                             $hasthumb = ' hasthumb';
@@ -528,6 +534,11 @@ class multiTV
                         $unit = (substr($this->fields[$fieldname]['width'], -1) == '%') ? '' : 'px';
                         $tvcss .= '.multitv #[+tvid+]list li.element .mtv_' . $fieldname . ' { width: ' . $this->fields[$fieldname]['width'] . $unit . ' !important }' . "\r\n";                    }
                     switch ($type) {
+                        case 'crop':
+                            $tvelement[] = '<label for="' . $tvid . $fieldname . '">' . $this->fields[$fieldname]['caption'] . '</label>';
+                            $tvelement[] = $this->renderMultiTVFormElement($type, $fieldname, $elements, 'mtv_' . $fieldname, $default);
+                            $tvelement[] = '<input class="mtvCropper mtvCrop" data-cropof="' . $tvid . $this->fields[$fieldname]['cropof'] . '_mtv" data-aspectratio="' . str_replace('img', '', $fieldname) . '" type="button" value="[+tvlang.crop+]"><br>';
+                            break;
                         case 'thumb':
                             $tvelement[] = '<div class="mtvThumb" id="' . $tvid . $this->fields[$fieldname]['thumbof'] . '_mtvpreview"></div>';
                             $hasthumb = ' hasthumb';
@@ -555,6 +566,11 @@ class multiTV
                     $elements = (isset($this->fields[$fieldname]['elements'])) ? $this->fields[$fieldname]['elements'] : '';
                     $default = (isset($this->fields[$fieldname]['default'])) ? $this->fields[$fieldname]['default'] : '';
                     switch ($type) {
+                        case 'crop':
+                            $tvelement[] = '<label for="' . $tvid . $fieldname . '">' . $this->fields[$fieldname]['caption'] . '</label>';
+                            $tvelement[] = $this->renderMultiTVFormElement($type, $fieldname, $elements, 'mtv_' . $fieldname, $default);
+                            $tvelement[] = '<input class="mtvCropper mtvCrop" data-cropof="' . $tvid . $this->fields[$fieldname]['cropof'] . '_mtv" data-aspectratio="' . str_replace('img', '', $fieldname) . '" type="button" value="[+tvlang.crop+]"><br>';
+                            break;
                         case 'thumb':
                             $tvelement[] = '<div class="mtvThumb" id="' . $tvid . $this->fields[$fieldname]['thumbof'] . '_mtvpreview"></div>';
                             $hasthumb = ' hasthumb';
@@ -629,6 +645,11 @@ class multiTV
                         $default = (isset($this->fields[$fieldname]['default'])) ? $this->fields[$fieldname]['default'] : '';
                         $caption = (is_array($tv) && isset($tv['caption'])) ? $tv['caption'] : $this->fields[$fieldname]['caption'];
                         switch ($type) {
+                            case 'crop':
+                                $tvElements[] = '<label for="' . $tvid . $fieldname . '">' . $caption . '</label>' .
+                                    $this->renderMultiTVFormElement($type, $fieldname, $elements, 'mtv_' . $fieldname, $default) .
+                                    '<input class="mtvCropper mtvCrop" data-cropof="' . $tvid . $this->fields[$fieldname]['cropof'] . '_mtv" data-aspectratio="' . str_replace('img', '', $fieldname) . '" type="button" value="[+tvlang.crop+]"><br>';
+                                break;
                             case 'thumb':
                                 $tvElements[] = '<div class="mtvThumb" id="' . $tvid . $this->fields[$fieldname]['thumbof'] . '_mtvpreview"></div>';
                                 break;
@@ -814,6 +835,11 @@ class multiTV
                 $default = (isset($this->fields[$fieldname]['default'])) ? $this->fields[$fieldname]['default'] : '';
                 $caption = (is_array($tv) && isset($tv['caption'])) ? $tv['caption'] : $this->fields[$fieldname]['caption'];
                 switch ($type) {
+                    case 'crop':
+                        $tvElements[] = '<label for="' . $config['table'] . $fieldname . '">' . $caption . '</label>' .
+                            $this->renderMultiTVFormElement($type, $fieldname, $elements, 'mtv_' . $fieldname, $default) .
+                            '<input class="mtvCropper mtvCrop" data-cropof="' . $config['table'] . $this->fields[$fieldname]['cropof'] . '_mtv" data-aspectratio="' . str_replace('img', '', $fieldname) . '" type="button" value="[+tvlang.crop+]"><br>';
+                        break;
                     case 'thumb':
                         $tvElements[] = '<div class="mtvThumb" id="' . $config['table'] . $this->fields[$fieldname]['thumbof'] . '_mtvpreview"></div>';
                         break;
