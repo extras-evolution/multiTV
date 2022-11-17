@@ -64,3 +64,5 @@ $language['reload'] = 'Herlaad';
 $language['close'] = 'Sluit';
 $language['close_button'] = 'Sluit [+lang.modulename+]';
 $language['config'] = 'Configuratie';
+
+$language['crop'] = 'crop';

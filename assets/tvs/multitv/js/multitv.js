@@ -292,6 +292,12 @@
                 var field = $(this).prev('input').attr('id');
                 BrowseServer(field);
             });
+            // Cropper modal dialog
+            $('.mtvCropper', el).click(function (e) {
+                e.preventDefault();
+                const field = $(this).prev('input').attr('id');
+                cropModal({this:this,input:field});
+            });
             // add element
             $('.copy', el).click(function (e) {
                 e.preventDefault();
@@ -1041,6 +1047,12 @@
             $('.browseimage', el).click(function () {
                 var field = $(this).prev('input').attr('id');
                 BrowseServer(field);
+                return false;
+            });
+            // Cropper modal dialog
+            $('.mtvCropper', el).click(function (e) {
+                const field = $(this).prev('input').attr('id');
+                cropModal({this:this,input:field,txtSave: _this.options.language.save, txtCancel:_this.options.language.cancel});
                 return false;
             });
             $('[name]', el).bind('change keyup', function (e) {
