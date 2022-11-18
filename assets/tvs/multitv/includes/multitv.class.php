@@ -1018,6 +1018,7 @@ class multiTV
                 break;
         }
         $tvOutput = $tvOutput[$this->tvName];
+       	if(empty($tvOutput)) $tvOutput = '[]';
         $tvOutput = json_decode($tvOutput, true);
         if (isset($tvOutput['fieldValue'])) {
             $tvOutput = $tvOutput['fieldValue'];
