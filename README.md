@@ -41,9 +41,8 @@ where,
 imgNxN - name that will be used as aspectRatio of Cropper.js initialization,
 cropof - image field
 
-1. download and place in assets\lib\cropper\ files from https://github.com/fengyuanchen/cropperjs
-2. update tvs\multitv
-3. create/update any config.inc.php to use new type "crop"
+1. update tvs\multitv
+2. create/update any config.inc.php to use new type "crop"
 
 As a result, you will get the parameters in the form of a string that can be substituted into phpthumb to crop the image (using snippet, etc.).
 
