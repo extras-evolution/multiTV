@@ -3,7 +3,7 @@ $settings['css'] = array(
 	'css/jquery-ui-1.10.4.custom.css',
 	'css/multitv.css',
   'css/colorpicker.css',
-    '../../lib/cropper/cropper.min.css'
+    '../../js/cropper/cropper.min.css'
 );
 
 // Check for ManagerManager
@@ -16,8 +16,8 @@ $settings['scripts'] = array_merge($settings['scripts'], array(
 	'js/jquery-ui-timepicker-addon.js',
 	'js/jquery-field-0.9.7.min.js',
   'js/colorpicker.js',
-	'../../lib/cropper/cropper.min.js',
-    '../../lib/cropper/jquery-cropper.min.js',
+	'../../js/cropper/cropper.min.js',
+    '../../js/cropper/jquery-cropper.min.js',
     'js/mtvCrop.js',
 		)
 );
