@@ -31,6 +31,7 @@ class multiTV
     public $tvTemplates = '';
     public $display = '';
     public $fieldnames = array();
+    public $fieldtitles = array();
     public $fieldcolumns = array();
     public $fieldform = array();
     public $fieldtypes = array();
