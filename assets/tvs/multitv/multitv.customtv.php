@@ -15,17 +15,23 @@ if (IN_MANAGER_MODE != 'true') {
 }
 
 // set customtv (base) path
-define('MTV_PATH', 'assets/tvs/multitv/');
-define('MTV_BASE_PATH', MODX_BASE_PATH . MTV_PATH);
+if (!defined('MTV_PATH')) {
+    define('MTV_PATH', 'assets/tvs/multitv/');
+}
+if (!defined('MTV_BASE_PATH')) {
+    define('MTV_BASE_PATH', MODX_BASE_PATH . MTV_PATH);
+}
 
 if (!class_exists('multiTV')) {
     include MTV_BASE_PATH . 'includes/multitv.class.php';
 }
 
-$multiTV = new multiTV($modx, array(
+$multiTV = new multiTV(
+    $modx,
+    [
         'type' => 'tv',
         'tvDefinitions' => $row,
-        'tvUrl' => MTV_PATH
-    )
+        'tvUrl' => MTV_PATH,
+    ]
 );
 echo $multiTV->generateScript();
