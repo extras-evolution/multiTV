@@ -50,6 +50,7 @@ after that you can get this ratio and pass to your image proccessor like phpthum
 
 ### Theory:
 MultiTV stored image`s ratio in database as 
+...
 {"fieldValue":[
 {"fieldTab":"",
 "image":"assets/images/img1.jpg",
@@ -60,7 +61,7 @@ MultiTV stored image`s ratio in database as
 "id":"img1"
 }
 ]}
-
+...
 get this ratio raw json via db helper or MultiTV method
 for phpThumb crop function correct argument is 'sx=12,sy=108,sw=967,sh=543'
 we can convert "x:12,y:108,width:967,height:543" to "sx=12,sy=108,sw=967,sh=543"
