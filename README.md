@@ -50,7 +50,7 @@ after that you can get this ratio and pass to your image proccessor like phpthum
 
 ### Theory:
 MultiTV stored image`s ratio in database as 
-...
+```
 {"fieldValue":[
 {"fieldTab":"",
 "image":"assets/images/img1.jpg",
@@ -61,7 +61,8 @@ MultiTV stored image`s ratio in database as
 "id":"img1"
 }
 ]}
-...
+```
+
 get this ratio raw json via db helper or MultiTV method
 for phpThumb crop function correct argument is 'sx=12,sy=108,sw=967,sh=543'
 we can convert "x:12,y:108,width:967,height:543" to "sx=12,sy=108,sw=967,sh=543"
@@ -69,7 +70,7 @@ and pass this to phpThumb class
 
 ### Create Snippet
 if you use phpthumb for front-end create snippet 'getImage' like this:
-...
+```
 require_once MODX_BASE_PATH .'/assets/snippets/phpthumb/phpthumb.class.php';
 
 $img_source = null;
@@ -120,15 +121,16 @@ if ($phpThumb->GenerateThumbnail()) {
 } 
 
 return  $path . $outputFilename;
-...
+```
 
-### Call in front-end
+### Call snippet in front-end
 
-in front-end template call snippet
-
+```
 [!getImage? &ratio=`img16x9`!]
 [!getImage? &ratio=`img4x3`!]
-
+```
 or
+```
 <img src="[!getImage? &ratio=`img16x9`!]">
 <img src="[!getImage? &ratio=`img4x3`!]">
+```
