@@ -41,9 +41,8 @@ where,
 imgNxN - name that will be used as aspectRatio of Cropper.js initialization,
 cropof - image field
 
-1. download and replace in assets\lib\cropper\ files from https://github.com/fengyuanchen/cropperjs
-2. update tvs\multitv
-3. create/update any config.inc.php to use new type "crop"
+1. update tvs\multitv
+2. create/update any config.inc.php to use new type "crop"
 
 As a result, in back-end you can edit images and set four aspect ratio for each image
 after that you can get this ratio and pass to your image proccessor like phpthumb to crop the image (using snippet, php class, etc.).

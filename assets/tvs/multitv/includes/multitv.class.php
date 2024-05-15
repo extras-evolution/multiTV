@@ -31,6 +31,7 @@ class multiTV
     public $tvTemplates = '';
     public $display = '';
     public $fieldnames = array();
+    public $fieldtitles = array();
     public $fieldcolumns = array();
     public $fieldform = array();
     public $fieldtypes = array();
@@ -1018,6 +1019,7 @@ class multiTV
                 break;
         }
         $tvOutput = $tvOutput[$this->tvName];
+       	if(empty($tvOutput)) $tvOutput = '[]';
         $tvOutput = json_decode($tvOutput, true);
         if (isset($tvOutput['fieldValue'])) {
             $tvOutput = $tvOutput['fieldValue'];
