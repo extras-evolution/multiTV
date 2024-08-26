@@ -102,7 +102,7 @@ class multiTV
             $this->tvName = $tvDefinitions['name'];
             $this->tvID = $tvDefinitions['id'];
             $this->tvCaption = $tvDefinitions['caption'];
-            $this->tvDescription = $tvDefinitions['description'];
+            $this->tvDescription = $tvDefinitions['description'] ?? '';
             $this->tvDefault = $tvDefinitions['default_text'];
             if (isset($tvDefinitions['tpl_config'])) {
                 $this->tvTemplates = 'templates' . $tvDefinitions['tpl_config'];
