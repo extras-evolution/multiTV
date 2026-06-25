@@ -1,0 +1,25 @@
+{
+	"name": "multitv",
+	"version": "1.0.0",
+	"description": "Custom TV for Evolution CMS: Transform a template variables into a sortable multi item list for the Evolution content management framework",
+	"homepage": "https://github.com/extras-evolution/multitv#readme",
+	"bugs": {
+		"url": "https://github.com/extras-evolution/multitv/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/extras-evolution/multitv.git"
+	},
+	"license": "GPL-3.0",
+	"author": "",
+	"type": "commonjs",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"inst": "npm i",
+		"build": "node index.js"
+	},
+	"dependencies": {
+		"zip-lib": "^1.4.0"
+	}
+}
