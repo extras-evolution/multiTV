@@ -10,6 +10,49 @@
         mtvpath: 'assets/tvs/multitv/'
     };
 
+    const initTinyMCE = function(editorId, theme, _this) {
+        // Если нет инициализации дефолтного конфига, то конфигов tinymce нет.
+        let numTM = tinyMCE.majorVersion;
+        let bridge = window[`modxRTEbridge_tinymce${numTM}`];
+        // Если нет инициализации дефолтного конфига, то конфигов tinymce нет.
+        if(bridge != undefined){
+            // Темы заданной в конфигурации multiTV может не существовать.
+            console.log(`${theme}`);
+            console.log(window[`config_tinymce${numTM}_${theme}`]);
+            var config_theme = typeof window[`config_tinymce${numTM}_${theme}`] != 'undefined' ? window[`config_tinymce${numTM}_${theme}`] : window[bridge.default];
+            var configObj = typeof theme != 'undefined' ? config_theme : window[bridge.default];
+            var newConfig = {};
+            for (var key in configObj) {
+                newConfig[key] = configObj[key];
+            }
+            // Минимальная высота редактора
+            if(!newConfig.min_height) {
+                newConfig.min_height = 230;
+            }
+            newConfig['selector'] = '#' + editorId;
+            newConfig['setup'] = function(ed) {
+                ed.on("change", function(e) {
+                    documentDirty=true;
+                    tinymce.triggerSave();
+                    jQuery('#'+_this.tvid).transformField("saveMultiValue");
+                });
+            };
+            tinyMCE.init(newConfig);
+        }else{
+            // Вот здесь уже определяем, как инициализировать tinymce по мажорной версии
+            // Но что-то я не уверен... Данного поведения добиться не удалось...
+            if(tinyMCE.majorVersion == 4) {
+                tinyMCE.execCommand('mceAddEditor', false, editorId);
+            } else {
+                tinyMCE.execCommand('mceAddControl', false, editorId);
+            }
+        }
+        //tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_ifr'), 'height', '200px');
+        //tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_tbl'), 'height', 'auto');
+        //tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_ifr'), 'width', '100%');
+        //tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_tbl'), 'width', '100%');
+    }
+
     // Plugin constructor
     function Plugin(el, options) {
         // Extending options
@@ -111,26 +154,22 @@
                         _this.fieldList.sortable({
                             start: function (e, ui) {
                                 $(ui.item).find('.inlineTabEditor').each(function () {
-                                    tinymce.execCommand('mceRemoveEditor', false, $(this).attr('id'));
+                                    if(typeof tinyMCE == 'object') {
+                                        tinymce.execCommand('mceRemoveEditor', false, $(this).attr('id'));
+                                    }
+                                    // Здесь другие редакторы....
                                 });
                             },
                             stop: function (e, ui) {
                                 $(ui.item).find('.inlineTabEditor').each(function () {
                                     var editorId = $(this).attr('id');
                                     var theme = $(this).data('theme');
-                                    if (tinyMCE.majorVersion == 4) {
-                                        if (modxRTEbridge_tinymce4 != undefined) {
-
-                                            var configObj = theme != undefined ? window['config_tinymce4_'+theme] : window[modxRTEbridge_tinymce4.default];
-                                            configObj['selector'] = '#' + editorId;
-                                            configObj['setup'] = function(ed) { ed.on("change", function(e) { documentDirty=true; tinymce.triggerSave(); jQuery('#'+_this.tvid).transformField("saveMultiValue"); }); };
-                                            tinyMCE.init(configObj);
-                                        } else {
-                                            tinyMCE.execCommand('mceAddEditor', false, editorId);
-                                        }
-                                    } else {
-                                        tinyMCE.execCommand('mceAddControl', false, editorId);
+                                    // №1
+                                    // Если нет инициализации дефолтного конфига, то конфигов tinymce нет.
+                                    if(typeof tinyMCE == 'object') {
+                                        initTinyMCE(editorId, theme, _this);
                                     }
+                                    // Здесь другие редакторы....
                                 });
                                 _this.saveMultiValue();
                             },
@@ -339,7 +378,10 @@
                                 break;
                             default: {
                                 if (this.type == 'textarea' && self.hasClass('mtv_richtext')) {
-                                    tinyMCE.get(self.attr('id')).setContent('');
+                                    if(typeof tinyMCE == 'object') {
+                                        tinyMCE.get(self.attr('id')).setContent('');
+                                    }
+                                    // Здесь другие редакторы....
                                     break;
                                 }
 
@@ -453,29 +495,12 @@
                     $(this).addClass('initialized');
                     var editorId = $(this).attr('id');
                     var theme = $(this).data('theme');
-                    if (tinyMCE.majorVersion == 4) {
-                        if (modxRTEbridge_tinymce4 != undefined) {
-
-                            var configObj = theme != undefined ? window['config_tinymce4_'+theme] : window[modxRTEbridge_tinymce4.default];
-                            var newConfig = {};
-                            for (var key in configObj) {
-                                newConfig[key] = configObj[key];
-                            }
-                            newConfig['selector'] = '#' + editorId;
-                            newConfig['setup'] = function(ed) { ed.on("change", function(e) { documentDirty=true; tinymce.triggerSave(); jQuery('#'+_this.tvid).transformField("saveMultiValue"); }); };
-                            tinyMCE.init(newConfig);
-                        } else {
-                            tinyMCE.execCommand('mceAddEditor', false, editorId);
-                        }
-                    } else {
-                        tinyMCE.execCommand('mceAddControl', false, editorId);
-                    }
-                    tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_ifr'), 'height', '200px');
-                    tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_tbl'), 'height', 'auto');
-                    tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_ifr'), 'width', '100%');
-                    tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_tbl'), 'width', '100%');
+                    // №2
+                    initTinyMCE(editorId, theme, _this);
                 });
-            } else if (typeof CKEDITOR !== 'undefined' && CKEDITOR.version.substr(0,1) == 4) {
+            }
+            // Здесь другие редакторы....
+            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.version.substr(0,1) == 4) {
                 $('.inlineTabEditor:not(.initialized)', el).each(function () {
                     $(this).addClass('initialized');
                     var editorId = $(this).attr('id');
@@ -497,6 +522,7 @@
             return false;
         },
         edit: function () {
+            var _this = this;
             var clone = this.fieldListElementEmpty.clone(true);
             this.fieldList.children('li').remove();
             this.fieldList.append(clone);
@@ -509,26 +535,21 @@
             this.fieldList.sortable({
                 start: function (e, ui) {
                     $(ui.item).find('.inlineTabEditor').each(function () {
-                        tinymce.execCommand('mceRemoveEditor', false, $(this).attr('id'));
+                        if(typeof tinyMCE == 'object') {
+                            tinymce.execCommand('mceRemoveEditor', false, $(this).attr('id'));
+                        }
+                        // Здесь другие редакторы....
                     });
                 },
                 stop: function (e, ui) {
                     $(ui.item).find('.inlineTabEditor').each(function () {
                         var editorId = $(this).attr('id');
                         var theme = $(this).data('theme');
-                        if (tinyMCE.majorVersion == 4) {
-                            if (modxRTEbridge_tinymce4 != undefined) {
-
-                                var configObj = theme != undefined ? window['config_tinymce4_'+theme] : window[modxRTEbridge_tinymce4.default];
-                                configObj['selector'] = '#' + editorId;
-                                configObj['setup'] = function(ed) { ed.on("change", function(e) { documentDirty=true; tinymce.triggerSave(); jQuery('#'+_this.tvid).transformField("saveMultiValue"); }); };
-                                tinyMCE.init(configObj);
-                            } else {
-                                tinyMCE.execCommand('mceAddEditor', false, editorId);
-                            }
-                        } else {
-                            tinyMCE.execCommand('mceAddControl', false, editorId);
+                        // №3
+                        if(typeof tinyMCE == 'object') {
+                            initTinyMCE(editorId, theme, _this);
                         }
+                        // Здесь другие редакторы....
                     });
                     this.saveMultiValue();
                 },
@@ -873,7 +894,8 @@
                         tinyMCE.execCommand('mceRemoveControl', false, editorId);
                     }
                 });
-            } else if (typeof CKEDITOR !== 'undefined' && CKEDITOR.version.substr(0,1) == 4) {
+            }
+            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.version.substr(0,1) == 4) {
                 $('.tabEditor', el).each(function () {
                     var editorId = $(this).attr('id');
                     CKEDITOR.instances[editorId].destroy();
@@ -1201,23 +1223,12 @@
                         $('.tabEditor', _this.fieldEditArea).each(function () {
                             var editorId = $(this).attr('id');
                             var theme = $(this).data('theme');
-                            if (tinyMCE.majorVersion == 4) {
-                                if (modxRTEbridge_tinymce4 != undefined) {
-                                    var configObj = theme != undefined ? window['config_tinymce4_'+theme] : window[modxRTEbridge_tinymce4.default];
-                                    configObj['selector'] = '#' + editorId;
-                                    tinyMCE.init(configObj);
-                                } else {
-                                    tinyMCE.execCommand('mceAddEditor', false, editorId);
-                                }
-                            } else {
-                                tinyMCE.execCommand('mceAddControl', false, editorId);
-                            }
-                            tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_ifr'), 'height', '200px');
-                            tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_tbl'), 'height', 'auto');
-                            tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_ifr'), 'width', '100%');
-                            tinyMCE.DOM.setStyle(tinyMCE.DOM.get(editorId + '_tbl'), 'width', '100%');
+                            // №4
+                            initTinyMCE(editorId, theme, _this);
                         });
-                    } else if (typeof CKEDITOR !== 'undefined' && CKEDITOR.version.substr(0,1) == 4) {
+                    }
+                    // Другие редакторы
+                    if (typeof CKEDITOR !== 'undefined' && CKEDITOR.version.substr(0,1) == 4) {
                         $('.tabEditor', _this.fieldEditArea).each(function () {
                             var editorId = $(this).attr('id');
                             var theme = $(this).data('theme');

@@ -6,6 +6,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License (GPL)
  * @author        Jako (thomas.jakobi@partout.info)
  */
+// Закрыть от прямого доступа
+if (!defined('MODX_BASE_PATH')):
+    http_response_code(403);
+    die('No access');
+endif;
+
 if (!function_exists('renderFormElement')) {
     include MODX_MANAGER_PATH . 'includes/tmplvars.inc.php';
 }
@@ -396,11 +402,12 @@ class multiTV
             case 'richtext' :
                 if ($this->display == 'datatable' || $this->display == 'dbtable' || $this->options['type'] == 'module') {
                     $this->fieldsrte[] = ($this->options['type'] == 'module') ? $fieldName : "tv" . $this->tvID . $fieldName;
-                    // invoke OnRichTextEditorInit event for TinyMCE4
+                    // invoke OnRichTextEditorInit event for TinyMCE
                     $fieldId = substr($fieldName, 0, -4);
                     $theme = isset($this->fields[$fieldId]['theme']) ? $this->fields[$fieldId]['theme'] : '';
                     if ($theme) {
-                        if (in_array($which_editor, array('TinyMCE4', 'CKEditor4'))) {
+                        // Если есть редактор
+                        if ($which_editor != "none") {
                             $evtOut = $this->modx->invokeEvent('OnRichTextEditorInit', array(
                                 'editor' => $which_editor,
                                 'options' => array('theme' => $theme)
@@ -412,11 +419,12 @@ class multiTV
                     $fieldClass[] = 'tabEditor';
                 } elseif( $this->display == 'vertical' || $this->display == 'single'){
                    $this->fieldsrte[] = ($this->options['type'] == 'module') ? $fieldName : "tv" . $this->tvID . $fieldName;
-                    // invoke OnRichTextEditorInit event for TinyMCE4
+                    // invoke OnRichTextEditorInit event for TinyMCE
                     $fieldId = substr($fieldName, 0, -4);
                     $theme = isset($this->fields[$fieldId]['theme']) ? $this->fields[$fieldId]['theme'] : '';
                     if ($theme) {
-                        if (in_array($which_editor, array('TinyMCE4', 'CKEditor4'))) {
+                        // Если есть редактор
+                        if ($which_editor != "none") {
                             $evtOut = $this->modx->invokeEvent('OnRichTextEditorInit', array(
                                 'editor' => $which_editor,
                                 'options' => array('theme' => $theme)
@@ -741,12 +749,12 @@ class multiTV
         }
 
         foreach ($files['css'] as $file) {
-            $cssfiles[] = '	<link rel="stylesheet" type="text/css" href="' . $tvpath . $file . '" />';
+            $cssfiles[] = ' <link rel="stylesheet" type="text/css" href="' . $tvpath . $file . '" />';
         }
         if ($this->cmsinfo['clipper'] != 'Clipper') {
             $files['scripts'] = array_merge($files['scripts'], array('js/multitvhelper' . $this->cmsinfo['seturl'] . '.js', 'js/multitv.js'));
             foreach ($files['scripts'] as $file) {
-                $scriptfiles[] = '	<script type="text/javascript" src="' . $tvpath . $file . '"></script>';
+                $scriptfiles[] = '  <script type="text/javascript" src="' . $tvpath . $file . '"></script>';
             }
         } else {
             $files['scripts'] = array_merge($files['scripts'], array(
@@ -908,11 +916,11 @@ class multiTV
         $placeholder['editform'] = $tvelement;
 
         foreach ($files['css'] as $file) {
-            $cssfiles[] = '	<link rel="stylesheet" type="text/css" href="' . $modulepath . $file . '" />';
+            $cssfiles[] = ' <link rel="stylesheet" type="text/css" href="' . $modulepath . $file . '" />';
         }
         $files['scripts'] = array_merge($files['scripts'], array('js/multitvhelper' . $this->cmsinfo['seturl'] . '.js', 'js/multitv.js'));
         foreach ($files['scripts'] as $file) {
-            $scriptfiles[] = '	<script type="text/javascript" src="' . $modulepath . $file . '"></script>';
+            $scriptfiles[] = '  <script type="text/javascript" src="' . $modulepath . $file . '"></script>';
         }
 
         $placeholder['cssfiles'] = implode("\r\n", $cssfiles);
@@ -1019,7 +1027,7 @@ class multiTV
                 break;
         }
         $tvOutput = $tvOutput[$this->tvName];
-       	if(empty($tvOutput)) $tvOutput = '[]';
+        if(empty($tvOutput)) $tvOutput = '[]';
         $tvOutput = json_decode($tvOutput, true);
         if (isset($tvOutput['fieldValue'])) {
             $tvOutput = $tvOutput['fieldValue'];
