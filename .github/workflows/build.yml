@@ -1,0 +1,34 @@
+name: Grunt Build
+on:
+  release:
+    types: [published]
+jobs:
+  build:
+    name: Сборка проекта
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [24]
+    steps:
+    - uses: actions/checkout@v6
+    - name: Установка Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: NPM установка пакетов
+      run: |
+        npm run inst
+
+    - name: Сборка плагина
+      run: |
+        npm run build
+
+    - name: Загрузка реализа
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: multitv.zip
+        tag: ${{ github.ref }}
+        overwrite: true
+        file_glob: true

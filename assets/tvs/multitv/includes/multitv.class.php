@@ -6,6 +6,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License (GPL)
  * @author        Jako (thomas.jakobi@partout.info)
  */
+// Закрыть от прямого доступа
+if (!defined('MODX_BASE_PATH')):
+    http_response_code(403);
+    die('No access');
+endif;
+
 if (!function_exists('renderFormElement')) {
     include MODX_MANAGER_PATH . 'includes/tmplvars.inc.php';
 }
@@ -47,6 +53,7 @@ class multiTV
     public $cmsinfo = array();
     public $options = array();
     private $modx;
+    private $richeditor = "none";
 
     public $params = [];
     private $_prepareStore;
@@ -60,7 +67,7 @@ class multiTV
         $this->language = $this->loadLanguage($this->modx->config['manager_language']);
         $this->options = $options;
         $this->options['modulename'] = isset($this->options['modulename']) ? $this->options['modulename'] : $this->language['modulename'];
-
+        $this->richeditor = $this->modx->config['which_editor'];
         $version = $this->modx->getVersionData();
         switch ($version['branch']) {
             case 'ClipperCMS':
@@ -158,7 +165,7 @@ class multiTV
 
                 if (count($this->fieldsrte)) {
                     $richTextEditor = $this->modx->invokeEvent("OnRichTextEditorInit", array(
-                            'editor' => $this->modx->config['which_editor'],
+                            'editor' => $this->richeditor,
                             'elements' => $this->fieldsrte,
                             'height' => '200px'
                         )
@@ -364,7 +371,12 @@ class multiTV
     // invoke modx renderFormElement and change the output (to multiTV demands)
     function renderMultiTVFormElement($fieldType, $fieldName, $fieldElements, $fieldClass, $fieldDefault)
     {
-        global $which_editor;
+        // Такое впечатление, что разрабатывалось при присутствии какогото расширения, которого у меня нет
+        // Поэтому данная функция будет постепенно дорабатываться к значениям по умолчанию (Значениям системы, а не расширений)
+
+        // $which_editor в 3.x недоступен
+        // Будем использовать $this->richeditor
+        // global $which_editor;
         $fieldName .= '_mtv';
         $currentScript = array();
         $currentClass = array();
@@ -396,13 +408,14 @@ class multiTV
             case 'richtext' :
                 if ($this->display == 'datatable' || $this->display == 'dbtable' || $this->options['type'] == 'module') {
                     $this->fieldsrte[] = ($this->options['type'] == 'module') ? $fieldName : "tv" . $this->tvID . $fieldName;
-                    // invoke OnRichTextEditorInit event for TinyMCE4
+                    // invoke OnRichTextEditorInit event for TinyMCE
                     $fieldId = substr($fieldName, 0, -4);
                     $theme = isset($this->fields[$fieldId]['theme']) ? $this->fields[$fieldId]['theme'] : '';
                     if ($theme) {
-                        if (in_array($which_editor, array('TinyMCE4', 'CKEditor4'))) {
+                        // Если есть редактор
+                        if ($this->richeditor != "none") {
                             $evtOut = $this->modx->invokeEvent('OnRichTextEditorInit', array(
-                                'editor' => $which_editor,
+                                'editor' => $this->richeditor,
                                 'options' => array('theme' => $theme)
                             ));
                             if (is_array($evtOut))
@@ -412,15 +425,18 @@ class multiTV
                     $fieldClass[] = 'tabEditor';
                 } elseif( $this->display == 'vertical' || $this->display == 'single'){
                    $this->fieldsrte[] = ($this->options['type'] == 'module') ? $fieldName : "tv" . $this->tvID . $fieldName;
-                    // invoke OnRichTextEditorInit event for TinyMCE4
+                    // invoke OnRichTextEditorInit event for TinyMCE
                     $fieldId = substr($fieldName, 0, -4);
                     $theme = isset($this->fields[$fieldId]['theme']) ? $this->fields[$fieldId]['theme'] : '';
                     if ($theme) {
-                        if (in_array($which_editor, array('TinyMCE4', 'CKEditor4'))) {
-                            $evtOut = $this->modx->invokeEvent('OnRichTextEditorInit', array(
-                                'editor' => $which_editor,
-                                'options' => array('theme' => $theme)
-                            ));
+                        // Если есть редактор
+                        if ($this->richeditor != "none") {
+                            $evtOut = $this->modx->invokeEvent('OnRichTextEditorInit', [
+                                'editor' => $this->richeditor,
+                                'options' => [
+                                    'theme' => $theme
+                                ]
+                            ]);
                             if (is_array($evtOut))
                                 $evtOut = implode('', $evtOut);
                         };
@@ -431,41 +447,85 @@ class multiTV
                 }
                 break;
         }
-        $formElement = $evtOut . renderFormElement($fieldType, 0, '', $fieldElements, '', '', array());
-        $formElement = ($theme) ? str_replace('id="', 'data-theme="' . $theme . '" id="', $formElement) : $formElement; // add optional richtext-theme
-        $formElement = preg_replace('/( tvtype=\"[^\"]+\")/', '', $formElement); // remove tvtype attribute
-        $formElement = preg_replace('/(<label[^>]*><\/label>)/', '', $formElement); // remove empty labels
-        $formElement = preg_replace('/( id=\"[^\"]+)/', ' id="[+tvid+]' . $fieldName, $formElement); // change id attributes
-        $formElement = preg_replace('/( name=\"[^\"]+)/', ' name="[+tvid+]' . $fieldName, $formElement); // change name attributes
-        preg_match('/(<script.*?script>)/s', $formElement, $currentScript); // get script
-        if (isset($currentScript[1])) { // the tv script is only included for the first tv that is using them (tv with image or file type)
-            $formElement = preg_replace('/(<script.*?script>)/s', '', $formElement); // remove the script tag
+        /**
+         * Отформатированы комментарии для удобства чтения
+         */
+        // $evtOut отсюда.
+        // $formElement = $evtOut . renderFormElement($fieldType, 0, '', $fieldElements, '', '', array());
+        // Сначало работаем непосредственно с элементом $formElement
+        $formElement = renderFormElement($fieldType, 0, '', $fieldElements, '', '', array());
+        // add optional richtext-theme
+        $formElement = ($theme) ? str_replace('id="', 'data-theme="' . $theme . '" id="', $formElement) : $formElement;
+        // remove tvtype attribute
+        $formElement = preg_replace('/( tvtype=\"[^\"]+\")/', '', $formElement);
+        // remove empty labels
+        $formElement = preg_replace('/(<label[^>]*><\/label>)/', '', $formElement);
+        // change id attributes
+        $formElement = preg_replace('/( id=\"[^\"]+)/', ' id="[+tvid+]' . $fieldName, $formElement);
+        // change name attributes
+        $formElement = preg_replace('/( name=\"[^\"]+)/', ' name="[+tvid+]' . $fieldName, $formElement);
+        // get script
+        // Если $evtOut остаётся сверху
+        // preg_match('/(<script.*?script>)/s', $formElement, $currentScript);
+        // the tv script is only included for the first tv that is using them (tv with image or file type)
+        // Вот это здесь точно не нужно. Если есть переопределение функций - пусть будут. multiTV делаем только под EvolutionCMS
+        // Зачем то перезаписывается весь скрипт на пустоту.
+        // Этого не нужно делать, все конфиги вырезаются и тогда получается, что вызов OnRichTextEditorInit просто нафиг не нужен.
+        /*
+        if (isset($currentScript[1])) {
+            // remove the script tag
+            $formElement = preg_replace('/(<script.*?script>)/s', '', $formElement);
             if ($this->cmsinfo['kcfinder'] == 'false' || $this->cmsinfo['seturl'] == 'old') {
-                $currentScript[1] = preg_replace('/function SetUrl.*script>/s', '</script>', $currentScript[1]); // remove original SetUrl function
+                // remove original SetUrl function
+                $currentScript[1] = preg_replace('/function SetUrl.*script>/s', '</script>', $currentScript[1]);
             }
-            $formElement = $formElement . $currentScript[1]; // move the script tag to the end
+            // move the script tag to the end
+            $formElement = $formElement . $currentScript[1];
         }
-        preg_match('/<.*?class=\"([^\"]*)/s', $formElement, $currentClass); // get current classes
-        $formElement = preg_replace('/class=\"[^\"]*\"/s', '', $formElement, 1); // remove all classes
+        */
+        // Если $evtOut остаётся сверху
+        // То не известно, как поведёт себя поиск, т. к. в скриптах script можно найти место с срабатыванием подобной регулярки
+        // Данное поведение мною было обнаружено на тестах
+        // get current classes
+        preg_match('/<.*?class=\"([^\"]*)/s', $formElement, $currentClass);
+        // remove all classes
+        $formElement = preg_replace('/class=\"[^\"]*\"/s', '', $formElement, 1);
         if ($fieldDefault != '') {
-            $formElement = preg_replace('/(<\w+)/', '$1 alt="' . $fieldDefault . '"', $formElement, 1); // add alt to first tag (the input)
+            // add alt to first tag (the input)
+            $formElement = preg_replace('/(<\w+)/', '$1 alt="' . $fieldDefault . '"', $formElement, 1);
             $fieldClass[] = 'setdefault';
         }
         if (isset($currentClass[1])) {
             $fieldClass[] = str_replace('DatePicker', 'mtvDatePicker', $currentClass[1]);
         }
         $fieldClass = implode(' ', array_unique($fieldClass));
-        $formElement = preg_replace('/(<\w+)/', '$1 class="' . $fieldClass . '"', $formElement, 1); // add class to first tag (the input)
-        $formElement = preg_replace('/<label for=[^>]*>([^<]*)<\/label>/s', '<label class="inlinelabel">$1</label>', $formElement); // add label class
-        $formElement = preg_replace('/(onclick="BrowseServer[^\"]+\")/', 'class="browseimage ' . $fieldClass . '"', $formElement); // remove imagebrowser onclick script
-        $formElement = str_replace('<script>document.getElementById(\'tv0\').addEventListener(\'change\', evoRenderTvImageCheck, false);</script>', '', $formElement); // remove imagebrowser onclick script
-        $formElement = preg_replace('/(onclick="BrowseFileServer[^\"]+\")/', 'class="browsefile ' . $fieldClass . '"', $formElement, 1); // remove filebrowser onclick script
-        $formElement = str_replace('document.forms[\'mutate\'].elements[\'tv0\'].value=\'\';document.forms[\'mutate\'].elements[\'tv0\'].onblur(); return true;', '$j(this).prev(\'input\').val(\'\').trigger(\'change\');', $formElement); // change datepicker onclick script
-        $formElement = preg_replace('/(<script.*?DatePicker.*?script>)/s', '', $formElement); // remove datepicker script
-        $formElement = preg_replace('/( onmouseover=\"[^\"]+\")/', '', $formElement); // delete onmouseover attribute
-        $formElement = preg_replace('/( onmouseout=\"[^\"]+\")/', '', $formElement); // delete onmouseout attribute
-        $formElement = str_replace(array('&nbsp;'), ' ', $formElement); // change whitespace
-        $formElement = str_replace(array('style="width:100%;"', 'style="width:100%"', ' width="100%"', '  width="100"', '<br />', 'onchange="documentDirty=true;"', " checked='checked'"), array(''), $formElement); // remove unused atrributes and tags
+        // add class to first tag (the input)
+        // $evtOut сюда
+        $formElement = $evtOut . preg_replace('/(<\w+)/', '$1 class="' . $fieldClass . '"', $formElement, 1);
+        // add label class
+        $formElement = preg_replace('/<label for=[^>]*>([^<]*)<\/label>/s', '<label class="inlinelabel">$1</label>', $formElement);
+        // remove imagebrowser onclick script
+        $formElement = preg_replace('/(onclick="BrowseServer[^\"]+\")/', 'class="browseimage ' . $fieldClass . '"', $formElement);
+        // remove imagebrowser onclick script
+        $formElement = str_replace('<script>document.getElementById(\'tv0\').addEventListener(\'change\', evoRenderTvImageCheck, false);</script>', '', $formElement);
+        // remove filebrowser onclick script
+        $formElement = preg_replace('/(onclick="BrowseFileServer[^\"]+\")/', 'class="browsefile ' . $fieldClass . '"', $formElement, 1);
+        // change datepicker onclick script
+        $formElement = str_replace('document.forms[\'mutate\'].elements[\'tv0\'].value=\'\';document.forms[\'mutate\'].elements[\'tv0\'].onblur(); return true;', '$j(this).prev(\'input\').val(\'\').trigger(\'change\');', $formElement);
+        // remove datepicker script
+        $formElement = preg_replace('/(<script.*?DatePicker.*?script>)/s', '', $formElement);
+        // Не понятно, почему удаляются аттрибуты событий
+        // delete onmouseover attribute
+        $formElement = preg_replace('/( onmouseover=\"[^\"]+\")/', '', $formElement);
+        // delete onmouseout attribute
+        $formElement = preg_replace('/( onmouseout=\"[^\"]+\")/', '', $formElement);
+        // change whitespace
+        $formElement = str_replace(array('&nbsp;'), ' ', $formElement);
+        // remove unused atrributes and tags
+        // Вот кто сказал, что это точно сработает?
+        // Есть класс у элемента, вот его описываем как нужно...
+        // Пока оставим... но удаление будет по окончанию тестов на других конфигах
+        $formElement = str_replace(array('style="width:100%;"', 'style="width:100%"', ' width="100%"', '  width="100"', '<br />', 'onchange="documentDirty=true;"', " checked='checked'"), array(''), $formElement);
         return trim($formElement);
     }
 
@@ -741,12 +801,12 @@ class multiTV
         }
 
         foreach ($files['css'] as $file) {
-            $cssfiles[] = '	<link rel="stylesheet" type="text/css" href="' . $tvpath . $file . '" />';
+            $cssfiles[] = ' <link rel="stylesheet" type="text/css" href="' . $tvpath . $file . '" />';
         }
         if ($this->cmsinfo['clipper'] != 'Clipper') {
             $files['scripts'] = array_merge($files['scripts'], array('js/multitvhelper' . $this->cmsinfo['seturl'] . '.js', 'js/multitv.js'));
             foreach ($files['scripts'] as $file) {
-                $scriptfiles[] = '	<script type="text/javascript" src="' . $tvpath . $file . '"></script>';
+                $scriptfiles[] = '  <script type="text/javascript" src="' . $tvpath . $file . '"></script>';
             }
         } else {
             $files['scripts'] = array_merge($files['scripts'], array(
@@ -908,11 +968,11 @@ class multiTV
         $placeholder['editform'] = $tvelement;
 
         foreach ($files['css'] as $file) {
-            $cssfiles[] = '	<link rel="stylesheet" type="text/css" href="' . $modulepath . $file . '" />';
+            $cssfiles[] = ' <link rel="stylesheet" type="text/css" href="' . $modulepath . $file . '" />';
         }
         $files['scripts'] = array_merge($files['scripts'], array('js/multitvhelper' . $this->cmsinfo['seturl'] . '.js', 'js/multitv.js'));
         foreach ($files['scripts'] as $file) {
-            $scriptfiles[] = '	<script type="text/javascript" src="' . $modulepath . $file . '"></script>';
+            $scriptfiles[] = '  <script type="text/javascript" src="' . $modulepath . $file . '"></script>';
         }
 
         $placeholder['cssfiles'] = implode("\r\n", $cssfiles);
@@ -1019,7 +1079,7 @@ class multiTV
                 break;
         }
         $tvOutput = $tvOutput[$this->tvName];
-       	if(empty($tvOutput)) $tvOutput = '[]';
+        if(empty($tvOutput)) $tvOutput = '[]';
         $tvOutput = json_decode($tvOutput, true);
         if (isset($tvOutput['fieldValue'])) {
             $tvOutput = $tvOutput['fieldValue'];
